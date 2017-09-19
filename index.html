@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  	<title>NYTIMES app</title>
+  	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  	<style>
+  		body {
+  			box-sizing: border-box;
+  		}
+
+  		.search-bar {
+  			padding: 10px 0px;
+  			background: silver;
+  		}
+
+      #input {
+        width: 50%;
+      }
+
+      .entry {
+        border: 2px solid black;
+        border-radius: 5px;
+        margin: 10px 0px;
+        background-color: #F7F7F7;
+      }
+
+      .img-entry {
+        width: 100%;
+        height: 400px;
+        object-fit: stretch;
+        overflow: hidden;
+      }
+
+      .main-article {
+        color: black;
+        background-color: #F7F7F7;
+        text-decoration: none;
+        padding-top: 10px;
+      }
+
+      .main-article a:link {
+        color: black;
+        text-align: center;
+      }
+
+  	</style>
+  </head>
+  <body>
+  	<div class="container">
+  		<div class="row">
+  		  <div class="col-md-12 text-center">
+  		    <div class="search-bar">
+  		    	<h1>What are you interested in today?</h1>
+  		    	<form id="search-form">
+  		  			<input id="input" type="text" placeholder="Search for a topic here"/>
+  		  			<button id="submit">Submit</button>
+  		  		</form>
+  		  	</div>
+  		  </div>
+        </div>
+  		  <div class="row">
+  		    <div class="col-md-12">
+  		    	<div class="results">
+  		    		
+  		    	</div>
+  		  </div>
+  		</div>
+  	</div>
+  	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+  	<script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="config.js"></script>
+
+    <script>
+
+      function generateImage(src) {
+        return `<img class="img-responsive img-entry" src="${src}"/>`;
+      }
+
+      function generateArticle(data) {
+        let headline = data.headline.main;
+        let snippet = data.snippet;
+        let url = data.web_url
+        return `<a href="${url}" target="_blank"><h3>${headline}</h3><p>${snippet}</p></a>`
+      }
+
+      function generateDiv() {
+        return `<div class="entry"><div class="main-image"></div><div class="main-article"></div></div>`;
+      }
+
+
+
+      $(document).ready(function(){
+        $("#submit").click((e) => {
+          e.preventDefault();
+          $(".results").html("");
+          let imgHTML, articleHTML;
+          $(".results").append(generateDiv());
+          let searchVal = $("#input").val();
+          let headers = new Headers({
+            'Authorization' : `Client-ID ${config.UNSPLASH_KEY}`
+          });
+
+          //unsplash image
+
+          fetch(`https://api.unsplash.com/search/photos?origin=*&page=1&query=${searchVal}`, {
+            headers: headers
+          })
+            .then((response) => response.json())
+            .then((res) => {
+              if (res.results[0]) {
+                let img = res.results[0].urls.regular;
+                imgHTML = generateImage(img);
+                console.log(imgHTML);
+                $(".main-image").append(imgHTML);
+              }
+              else {
+                $(".results").html("No results were found.");
+              }
+            })
+            .catch(() => {
+              console.log('Unsplash error');
+            });
+
+            fetch(`https://api.nytimes.com/svc/search/v2/articlesearch.json?api-key=${config.NYT_KEY}&q=${searchVal}`)
+              .then((response) => response.json())
+              .then((data) => {
+                let article = data.response.docs[0];
+                console.log(article);
+                articleHTML = generateArticle(article);
+                $(".main-article").append(articleHTML);
+              }).catch(() => console.log("NYTIMES error"));
+            
+            
+        });
+
+      });
+    </script>
+  </body>
+</html>
